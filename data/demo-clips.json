@@ -1,0 +1,27 @@
+[
+  {
+    "id": "demo-clip-1",
+    "title": "示範題庫（合成語音，非真實影片來源，僅供 Phase 1 評分模型驗證）",
+    "sourceDeclaration": "DEMO",
+    "lines": [
+      {
+        "id": "demo-line-1",
+        "clipSourceId": "demo-clip-1",
+        "order": 1,
+        "startSec": 0,
+        "endSec": 5.26,
+        "subtitleText": "今天的天氣真的非常好",
+        "referenceAudioUrl": "/audio/demo/line1.wav"
+      },
+      {
+        "id": "demo-line-2",
+        "clipSourceId": "demo-clip-1",
+        "order": 2,
+        "startSec": 0,
+        "endSec": 4.27,
+        "subtitleText": "我們一起去公園散步吧",
+        "referenceAudioUrl": "/audio/demo/line2.wav"
+      }
+    ]
+  }
+]
