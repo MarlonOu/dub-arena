@@ -1,8 +1,9 @@
 [
   {
     "id": "demo-clip-1",
-    "title": "示範題庫（合成語音，非真實影片來源，僅供 Phase 1 評分模型驗證）",
+    "title": "日常對話（示範，合成語音，非真實影片來源）",
     "sourceDeclaration": "DEMO",
+    "coverColor": "#3f3f46",
     "lines": [
       {
         "id": "demo-line-1",
@@ -21,6 +22,58 @@
         "endSec": 4.27,
         "subtitleText": "我們一起去公園散步吧",
         "referenceAudioUrl": "/audio/demo/line2.wav"
+      }
+    ]
+  },
+  {
+    "id": "demo-clip-2",
+    "title": "看球賽聊天（示範，合成語音，非真實影片來源）",
+    "sourceDeclaration": "DEMO",
+    "coverColor": "#7c2d12",
+    "lines": [
+      {
+        "id": "demo-line-3",
+        "clipSourceId": "demo-clip-2",
+        "order": 1,
+        "startSec": 0,
+        "endSec": 5.84,
+        "subtitleText": "你昨天晚上有沒有看那場比賽",
+        "referenceAudioUrl": "/audio/demo/line3.wav"
+      },
+      {
+        "id": "demo-line-4",
+        "clipSourceId": "demo-clip-2",
+        "order": 2,
+        "startSec": 0,
+        "endSec": 6.36,
+        "subtitleText": "太精彩了我完全捨不得轉台",
+        "referenceAudioUrl": "/audio/demo/line4.wav"
+      }
+    ]
+  },
+  {
+    "id": "demo-clip-3",
+    "title": "居家生活（示範，合成語音，非真實影片來源）",
+    "sourceDeclaration": "DEMO",
+    "coverColor": "#1e3a8a",
+    "lines": [
+      {
+        "id": "demo-line-5",
+        "clipSourceId": "demo-clip-3",
+        "order": 1,
+        "startSec": 0,
+        "endSec": 6.27,
+        "subtitleText": "這杯咖啡的香氣讓我瞬間清醒",
+        "referenceAudioUrl": "/audio/demo/line5.wav"
+      },
+      {
+        "id": "demo-line-6",
+        "clipSourceId": "demo-clip-3",
+        "order": 2,
+        "startSec": 0,
+        "endSec": 5.35,
+        "subtitleText": "麻煩幫我把音量再調大一點",
+        "referenceAudioUrl": "/audio/demo/line6.wav"
       }
     ]
   }
