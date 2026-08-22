@@ -88,19 +88,32 @@ export default function ReviewPage() {
               </div>
             </div>
 
-            <video
-              src={clip.lines[0]?.videoUrl}
-              controls
-              className="w-full max-w-md rounded border border-zinc-200 bg-black"
-            />
+            {clip.contentType === "AUDIO_PACK" ? (
+              <div className="flex flex-col gap-2">
+                {clip.lines.map((line) => (
+                  <div key={line.id} className="flex flex-col gap-1">
+                    <div className="text-sm text-zinc-700">{line.subtitleText}</div>
+                    <audio src={line.referenceAudioUrl} controls className="w-full max-w-md" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <video
+                  src={clip.lines[0]?.videoUrl}
+                  controls
+                  className="w-full max-w-md rounded border border-zinc-200 bg-black"
+                />
 
-            <div className="flex flex-col gap-1 text-sm text-zinc-700">
-              {clip.lines.map((line) => (
-                <div key={line.id}>
-                  [{line.startSec.toFixed(1)}s–{line.endSec.toFixed(1)}s] {line.subtitleText}
+                <div className="flex flex-col gap-1 text-sm text-zinc-700">
+                  {clip.lines.map((line) => (
+                    <div key={line.id}>
+                      [{line.startSec.toFixed(1)}s–{line.endSec.toFixed(1)}s] {line.subtitleText}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
 
             <div className="flex gap-2">
               <button

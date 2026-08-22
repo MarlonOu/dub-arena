@@ -169,8 +169,14 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
 
       {score && <ScoreBreakdownPanel score={score} />}
 
-      {recordedBuffer && currentLine && (
+      {recordedBuffer && currentLine && currentLine.videoUrl && (
         <DubbedPlayback videoUrl={currentLine.videoUrl} recordedBuffer={recordedBuffer} />
+      )}
+
+      {recordedBuffer && currentLine && !currentLine.videoUrl && (
+        <div className="rounded border border-zinc-200 p-4 text-sm text-zinc-500">
+          此題目為純音檔語音包，沒有影片畫面可供疊音播放，請用上方「播放我的配音」比對評分即可。
+        </div>
       )}
     </main>
   );

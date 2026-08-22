@@ -21,6 +21,14 @@ function contentTypeFor(filename: string): string {
       return "video/webm";
     case "mov":
       return "video/quicktime";
+    case "mp3":
+      return "audio/mpeg";
+    case "wav":
+      return "audio/wav";
+    case "m4a":
+      return "audio/mp4";
+    case "ogg":
+      return "audio/ogg";
     default:
       return "application/octet-stream";
   }
