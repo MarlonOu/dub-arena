@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth/session";
 
 // 保護管理後台頁面與投稿 API 中會洩漏未審核內容／可變更審核狀態的部分。
 // Phase 4 尚無帳號系統（見資料模型文件，Account 要到連線功能才會導入），
@@ -16,6 +17,8 @@ import type { NextRequest } from "next/server";
 function needsAuth(request: NextRequest): boolean {
   const { pathname, searchParams } = request.nextUrl;
 
+  // /admin/login 本身不受保護，否則沒登入的人連登入頁面都進不去，會死循環
+  if (pathname === "/admin/login") return false;
   if (pathname.startsWith("/admin")) return true;
 
   if (pathname.startsWith("/api/contributions")) {
@@ -29,9 +32,21 @@ function needsAuth(request: NextRequest): boolean {
   return false;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (!needsAuth(request)) {
     return NextResponse.next();
+  }
+
+  // Phase 7：具名審核者帳號（session cookie）優先於 Basic Auth 檢查，兩種方式
+  // 任一通過即放行，ADMIN_USER／ADMIN_PASSWORD 仍保留作為備援登入方式，
+  // 不會因為導入審核者帳號系統而失效（見 配音擂台-04-roadmap.md Phase 7）。
+  const sessionSecret = process.env.SESSION_SECRET;
+  const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (sessionSecret && sessionToken) {
+    const username = await verifySession(sessionToken, sessionSecret);
+    if (username) {
+      return NextResponse.next();
+    }
   }
 
   const expectedUser = process.env.ADMIN_USER?.trim().toLowerCase();

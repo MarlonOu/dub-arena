@@ -31,4 +31,8 @@ export interface ClipSource {
   status: ClipStatus;
   contributorName: string;
   createdAt: string;
+  /** Phase 7：核准／駁回時記錄的審核者帳號與時間，PENDING 狀態下必為 undefined。
+   * 目前只寫入資料庫，還沒有對應的檢視介面，見 配音擂台-04-roadmap.md。 */
+  reviewedBy?: string;
+  reviewedAt?: string;
 }

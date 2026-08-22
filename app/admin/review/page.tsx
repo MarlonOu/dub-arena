@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { ClipSource } from "@/lib/types/line";
 
 export default function ReviewPage() {
+  const router = useRouter();
   const [pending, setPending] = useState<ClipSource[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  async function handleLogout() {
+    // 若是用 /admin/login 的審核者帳號登入，這裡會清掉 session cookie。
+    // 若是用瀏覽器原生 Basic Auth 登入框，瀏覽器仍會記住帳密直到關閉瀏覽器，
+    // 這個按鈕對 Basic Auth 無效，屬已知限制（Basic Auth 本身沒有標準登出方式）。
+    await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
+    router.push("/admin/login");
+  }
 
   async function loadOnce(cancelledRef: { current: boolean }) {
     try {
@@ -61,9 +71,18 @@ export default function ReviewPage() {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-xl font-semibold">審核後台</h1>
-        <p className="mt-1 text-sm text-zinc-500">待審核的投稿清單，核准後才會出現在題目瀏覽層。</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">審核後台</h1>
+          <p className="mt-1 text-sm text-zinc-500">待審核的投稿清單，核准後才會出現在題目瀏覽層。</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-fit rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600"
+        >
+          登出
+        </button>
       </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}

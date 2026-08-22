@@ -1,4 +1,5 @@
 import { updateContributionStatus } from "@/lib/repository/contributionStore";
+import { identifyActor } from "@/lib/auth/identifyActor";
 import type { ClipStatus } from "@/lib/types/line";
 
 export const runtime = "nodejs";
@@ -15,7 +16,8 @@ export async function PATCH(
     return Response.json({ error: "status 必須是 APPROVED 或 REJECTED" }, { status: 400 });
   }
 
-  const updated = await updateContributionStatus(id, status);
+  const reviewedBy = await identifyActor();
+  const updated = await updateContributionStatus(id, status, reviewedBy);
   if (!updated) {
     return Response.json({ error: "找不到該投稿" }, { status: 404 });
   }

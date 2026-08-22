@@ -17,6 +17,8 @@ interface ClipSourceRow {
   cover_color: string;
   status: string;
   created_at: Date;
+  reviewed_by: string | null;
+  reviewed_at: Date | null;
 }
 
 interface LineRow {
@@ -53,6 +55,8 @@ function rowToClipSource(row: ClipSourceRow, lines: Line[]): ClipSource {
     coverColor: row.cover_color,
     status: row.status as ClipStatus,
     createdAt: row.created_at.toISOString(),
+    ...(row.reviewed_by ? { reviewedBy: row.reviewed_by } : {}),
+    ...(row.reviewed_at ? { reviewedAt: row.reviewed_at.toISOString() } : {}),
     lines,
   };
 }
@@ -80,12 +84,12 @@ export async function listContributions(status?: ClipStatus): Promise<ClipSource
   try {
     const { rows } = status
       ? await client.query<ClipSourceRow>(
-          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at
+          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at, reviewed_by, reviewed_at
            FROM clip_sources WHERE status = $1 ORDER BY created_at DESC`,
           [status]
         )
       : await client.query<ClipSourceRow>(
-          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at
+          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at, reviewed_by, reviewed_at
            FROM clip_sources ORDER BY created_at DESC`
         );
     return await attachLines(client, rows);
@@ -140,15 +144,16 @@ export async function addContribution(clip: ClipSource): Promise<void> {
 
 export async function updateContributionStatus(
   id: string,
-  status: ClipStatus
+  status: ClipStatus,
+  reviewedBy?: string
 ): Promise<ClipSource | null> {
   const pool = getPool();
   const client = await pool.connect();
   try {
     const { rows } = await client.query<ClipSourceRow>(
-      `UPDATE clip_sources SET status = $1 WHERE id = $2
-       RETURNING id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at`,
-      [status, id]
+      `UPDATE clip_sources SET status = $1, reviewed_by = $2, reviewed_at = $3 WHERE id = $4
+       RETURNING id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at, reviewed_by, reviewed_at`,
+      [status, reviewedBy ?? null, reviewedBy ? new Date().toISOString() : null, id]
     );
     if (rows.length === 0) return null;
     const [clip] = await attachLines(client, rows);
