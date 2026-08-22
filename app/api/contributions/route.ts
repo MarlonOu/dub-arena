@@ -10,6 +10,11 @@ export const runtime = "nodejs";
 const VALID_STATUS: ClipStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 const UPLOAD_DIR = path.join(process.cwd(), "data", "uploads");
 
+// 已知限制清單裡的「data/uploads/ 沒有大小限制」，先補上基本上限。
+// 沒有轉檔壓縮，這裡只是防濫用的粗略上限，不是精確的容量規劃。
+const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200MB，單句對話影片綽綽有餘
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024; // 20MB，單句語音綽綽有餘
+
 export async function GET(request: NextRequest) {
   const statusParam = request.nextUrl.searchParams.get("status");
   const status = VALID_STATUS.includes(statusParam as ClipStatus)
@@ -50,6 +55,12 @@ async function handleVideoSubmission(
 
   if (!(videoFile instanceof File)) {
     return Response.json({ error: "缺少影片檔" }, { status: 400 });
+  }
+  if (videoFile.size > MAX_VIDEO_BYTES) {
+    return Response.json(
+      { error: `影片檔過大（上限 ${Math.floor(MAX_VIDEO_BYTES / 1024 / 1024)}MB）` },
+      { status: 400 }
+    );
   }
 
   let lineInputs: VideoLineInput[];
@@ -125,6 +136,12 @@ async function handleAudioPackSubmission(
     if (!lineInputs[i].subtitleText) {
       return Response.json({ error: `第 ${i + 1} 段缺少文字說明` }, { status: 400 });
     }
+    if (f.size > MAX_AUDIO_BYTES) {
+      return Response.json(
+        { error: `第 ${i + 1} 段音檔過大（上限 ${Math.floor(MAX_AUDIO_BYTES / 1024 / 1024)}MB）` },
+        { status: 400 }
+      );
+    }
     audioFiles.push(f);
   }
 
@@ -159,7 +176,15 @@ async function handleAudioPackSubmission(
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    // 通常是請求主體被截斷（例如超過 next.config.ts 的 proxyClientMaxBodySize，
+    // 或用戶端本身送出畸形的 multipart 內容）導致 boundary 解析失敗，
+    // 明確回一個乾淨的錯誤，不要讓例外變成沒有訊息的 500。
+    return Response.json({ error: "檔案讀取失敗，可能是檔案過大或格式不正確" }, { status: 400 });
+  }
 
   const title = String(formData.get("title") ?? "").trim();
   const contributorName = String(formData.get("contributorName") ?? "").trim();

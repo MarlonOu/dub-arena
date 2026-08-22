@@ -98,6 +98,25 @@ export async function listContributions(status?: ClipStatus): Promise<ClipSource
   }
 }
 
+const HISTORY_LIMIT = 50;
+
+/** Phase 7.1：審核紀錄檢視介面用，列出已審核（非 PENDING）的投稿，依審核時間新到舊，
+ * 最多回傳 HISTORY_LIMIT 筆——沒有分頁機制，這是刻意畫的範圍，數量變多後需要補分頁。 */
+export async function listReviewedContributions(): Promise<ClipSource[]> {
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query<ClipSourceRow>(
+      `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at, reviewed_by, reviewed_at
+       FROM clip_sources WHERE status != 'PENDING' ORDER BY reviewed_at DESC NULLS LAST LIMIT $1`,
+      [HISTORY_LIMIT]
+    );
+    return await attachLines(client, rows);
+  } finally {
+    client.release();
+  }
+}
+
 export async function addContribution(clip: ClipSource): Promise<void> {
   const pool = getPool();
   const client = await pool.connect();

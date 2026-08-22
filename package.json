@@ -8,7 +8,8 @@
     "start": "next start -p 3002",
     "lint": "eslint",
     "db:migrate": "node scripts/migrate.mjs",
-    "reviewer:create": "node scripts/create-reviewer.mjs"
+    "reviewer:create": "node scripts/create-reviewer.mjs",
+    "exports:cleanup": "node scripts/cleanup-exports.mjs"
   },
   "dependencies": {
     "next": "16.3.1",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { ClipSource } from "@/lib/types/line";
 
 export default function ReviewPage() {
@@ -76,13 +77,21 @@ export default function ReviewPage() {
           <h1 className="text-xl font-semibold">審核後台</h1>
           <p className="mt-1 text-sm text-zinc-500">待審核的投稿清單，核准後才會出現在題目瀏覽層。</p>
         </div>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="w-fit rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600"
-        >
-          登出
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/history"
+            className="w-fit rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600"
+          >
+            審核紀錄
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="w-fit rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600"
+          >
+            登出
+          </button>
+        </div>
       </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
