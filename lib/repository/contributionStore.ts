@@ -1,48 +1,159 @@
-import { promises as fs } from "fs";
-import path from "path";
-import type { ClipSource, ClipStatus } from "@/lib/types/line";
+import type { PoolClient } from "pg";
+import { getPool } from "@/lib/db/pool";
+import type { ClipSource, ClipStatus, Line } from "@/lib/types/line";
 
 // 伺服器端專用（Route Handlers 呼叫），不得被 client component 匯入。
-// 以本機檔案系統儲存投稿清單，這是 Phase 5 導入 PostgreSQL／Prisma 前的輕量過渡實作，
-// 讀寫介面（listContributions／addContribution／updateContributionStatus）維持穩定，
-// 之後置換底層儲存時呼叫端不需修改。
+// Phase 5：改用 PostgreSQL（見 lib/db/pool.ts 說明為何用 pg 而非 Prisma）取代
+// Phase 4 的 data/contributions.json 檔案儲存。對外介面
+// （listContributions／addContribution／updateContributionStatus）維持不變，
+// 呼叫端（app/api/contributions/**）完全不需修改。
 
-const DATA_FILE = path.join(process.cwd(), "data", "contributions.json");
-
-async function readAll(): Promise<ClipSource[]> {
-  try {
-    const raw = await fs.readFile(DATA_FILE, "utf-8");
-    return JSON.parse(raw) as ClipSource[];
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return [];
-    throw err;
-  }
+interface ClipSourceRow {
+  id: string;
+  title: string;
+  contributor_name: string;
+  source_declaration: string;
+  content_type: string;
+  cover_color: string;
+  status: string;
+  created_at: Date;
 }
 
-async function writeAll(clips: ClipSource[]): Promise<void> {
-  await fs.mkdir(path.dirname(DATA_FILE), { recursive: true });
-  await fs.writeFile(DATA_FILE, JSON.stringify(clips, null, 2), "utf-8");
+interface LineRow {
+  id: string;
+  clip_source_id: string;
+  order: number;
+  start_sec: number;
+  end_sec: number;
+  subtitle_text: string;
+  reference_audio_url: string;
+  video_url: string | null;
+}
+
+function rowToLine(row: LineRow): Line {
+  return {
+    id: row.id,
+    clipSourceId: row.clip_source_id,
+    order: row.order,
+    startSec: row.start_sec,
+    endSec: row.end_sec,
+    subtitleText: row.subtitle_text,
+    referenceAudioUrl: row.reference_audio_url,
+    ...(row.video_url ? { videoUrl: row.video_url } : {}),
+  };
+}
+
+function rowToClipSource(row: ClipSourceRow, lines: Line[]): ClipSource {
+  return {
+    id: row.id,
+    title: row.title,
+    contributorName: row.contributor_name,
+    sourceDeclaration: row.source_declaration as ClipSource["sourceDeclaration"],
+    contentType: row.content_type as ClipSource["contentType"],
+    coverColor: row.cover_color,
+    status: row.status as ClipStatus,
+    createdAt: row.created_at.toISOString(),
+    lines,
+  };
+}
+
+async function attachLines(client: PoolClient, clipRows: ClipSourceRow[]): Promise<ClipSource[]> {
+  if (clipRows.length === 0) return [];
+  const ids = clipRows.map((r) => r.id);
+  const { rows: lineRows } = await client.query<LineRow>(
+    `SELECT id, clip_source_id, "order", start_sec, end_sec, subtitle_text, reference_audio_url, video_url
+     FROM lines WHERE clip_source_id = ANY($1::uuid[]) ORDER BY "order" ASC`,
+    [ids]
+  );
+  const linesByClip = new Map<string, Line[]>();
+  for (const row of lineRows) {
+    const list = linesByClip.get(row.clip_source_id) ?? [];
+    list.push(rowToLine(row));
+    linesByClip.set(row.clip_source_id, list);
+  }
+  return clipRows.map((row) => rowToClipSource(row, linesByClip.get(row.id) ?? []));
 }
 
 export async function listContributions(status?: ClipStatus): Promise<ClipSource[]> {
-  const all = await readAll();
-  return status ? all.filter((c) => c.status === status) : all;
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    const { rows } = status
+      ? await client.query<ClipSourceRow>(
+          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at
+           FROM clip_sources WHERE status = $1 ORDER BY created_at DESC`,
+          [status]
+        )
+      : await client.query<ClipSourceRow>(
+          `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at
+           FROM clip_sources ORDER BY created_at DESC`
+        );
+    return await attachLines(client, rows);
+  } finally {
+    client.release();
+  }
 }
 
 export async function addContribution(clip: ClipSource): Promise<void> {
-  const all = await readAll();
-  all.push(clip);
-  await writeAll(all);
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO clip_sources (id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        clip.id,
+        clip.title,
+        clip.contributorName,
+        clip.sourceDeclaration,
+        clip.contentType,
+        clip.coverColor,
+        clip.status,
+        clip.createdAt,
+      ]
+    );
+    for (const line of clip.lines) {
+      await client.query(
+        `INSERT INTO lines (id, clip_source_id, "order", start_sec, end_sec, subtitle_text, reference_audio_url, video_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          line.id,
+          line.clipSourceId,
+          line.order,
+          line.startSec,
+          line.endSec,
+          line.subtitleText,
+          line.referenceAudioUrl,
+          line.videoUrl ?? null,
+        ]
+      );
+    }
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateContributionStatus(
   id: string,
   status: ClipStatus
 ): Promise<ClipSource | null> {
-  const all = await readAll();
-  const idx = all.findIndex((c) => c.id === id);
-  if (idx === -1) return null;
-  all[idx] = { ...all[idx], status };
-  await writeAll(all);
-  return all[idx];
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query<ClipSourceRow>(
+      `UPDATE clip_sources SET status = $1 WHERE id = $2
+       RETURNING id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at`,
+      [status, id]
+    );
+    if (rows.length === 0) return null;
+    const [clip] = await attachLines(client, rows);
+    return clip;
+  } finally {
+    client.release();
+  }
 }

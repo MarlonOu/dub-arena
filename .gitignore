@@ -3,7 +3,10 @@ node_modules/
 .env
 *.log
 
-# UGC 投稿執行期資料，Phase 5 導入 PostgreSQL 後這個檔案／目錄會被取代，
-# 不進版控（性質類似資料庫內容，不是原始碼）
+# UGC 投稿執行期資料。data/contributions.json 是 Phase 4 的檔案儲存過渡實作，
+# Phase 5 起已改用 PostgreSQL（見 lib/repository/contributionStore.ts），
+# 不再產生此檔案，保留在 .gitignore 只是避免舊資料誤入版控。
+# data/uploads/ 仍在使用：投稿的影片／音檔本身還是存在本機磁碟，只有結構化資料
+# （ClipSource／Line）搬進資料庫，不進版控（性質類似資料庫內容，不是原始碼）
 /data/contributions.json
 /data/uploads/
