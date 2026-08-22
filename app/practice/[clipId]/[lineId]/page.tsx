@@ -46,6 +46,10 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
   }, [clipId]);
 
   const currentLine = clip?.lines.find((l) => l.id === lineId) ?? null;
+  // 特意存成獨立變數（而非直接在 JSX 屬性內用 currentLine.videoUrl），
+  // 因為對「物件屬性」的窄化在部分 TypeScript／建置環境組合下不會跨越 JSX
+  // 屬性賦值邊界正確傳遞，對「單一變數」的窄化則不會有這個問題，較穩妥。
+  const practiceVideoUrl = currentLine?.videoUrl;
 
   useEffect(() => {
     if (!currentLine) return;
@@ -169,11 +173,11 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
 
       {score && <ScoreBreakdownPanel score={score} />}
 
-      {recordedBuffer && currentLine && currentLine.videoUrl && (
-        <DubbedPlayback videoUrl={currentLine.videoUrl} recordedBuffer={recordedBuffer} />
+      {recordedBuffer && practiceVideoUrl && (
+        <DubbedPlayback videoUrl={practiceVideoUrl} recordedBuffer={recordedBuffer} />
       )}
 
-      {recordedBuffer && currentLine && !currentLine.videoUrl && (
+      {recordedBuffer && currentLine && !practiceVideoUrl && (
         <div className="rounded border border-zinc-200 p-4 text-sm text-zinc-500">
           此題目為純音檔語音包，沒有影片畫面可供疊音播放，請用上方「播放我的配音」比對評分即可。
         </div>
