@@ -9,6 +9,9 @@ import { readFileSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
 import pg from "pg";
+import { loadEnvFile } from "./loadEnv.mjs";
+
+loadEnvFile();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

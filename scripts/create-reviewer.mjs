@@ -1,6 +1,7 @@
 // 建立審核者帳號（Phase 7）。沒有自助註冊頁面，只能由伺服器管理員執行這支腳本。
-// 用法：
-//   DATABASE_URL=... REVIEWER_USERNAME=xxx REVIEWER_PASSWORD=yyy node scripts/create-reviewer.mjs
+// 用法（DATABASE_URL 會自動從 .env 讀取，不用重複打；REVIEWER_USERNAME／
+// REVIEWER_PASSWORD 是一次性操作，刻意不放進 .env，每次呼叫時明確指定）：
+//   REVIEWER_USERNAME=xxx REVIEWER_PASSWORD=yyy pnpm run reviewer:create
 // 密碼雜湊用法跟 lib/auth/password.ts 一致（Node 內建 crypto.scrypt），
 // 這支腳本刻意不 import lib/auth/password.ts 是因為那個檔案在 Next.js 專案結構下
 // 用了 "@/" path alias，獨立腳本沒有走 Next.js 的 module resolver，直接複製一份
@@ -8,6 +9,9 @@
 
 import { randomBytes, randomUUID, scryptSync } from "crypto";
 import pg from "pg";
+import { loadEnvFile } from "./loadEnv.mjs";
+
+loadEnvFile();
 
 const KEY_LENGTH = 64;
 
