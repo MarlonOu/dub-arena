@@ -12,7 +12,8 @@
         "startSec": 0,
         "endSec": 5.26,
         "subtitleText": "今天的天氣真的非常好",
-        "referenceAudioUrl": "/audio/demo/line1.wav"
+        "referenceAudioUrl": "/audio/demo/line1.wav",
+        "videoUrl": "/audio/demo/line1.mp4"
       },
       {
         "id": "demo-line-2",
@@ -21,7 +22,8 @@
         "startSec": 0,
         "endSec": 4.27,
         "subtitleText": "我們一起去公園散步吧",
-        "referenceAudioUrl": "/audio/demo/line2.wav"
+        "referenceAudioUrl": "/audio/demo/line2.wav",
+        "videoUrl": "/audio/demo/line2.mp4"
       }
     ]
   },
@@ -38,7 +40,8 @@
         "startSec": 0,
         "endSec": 5.84,
         "subtitleText": "你昨天晚上有沒有看那場比賽",
-        "referenceAudioUrl": "/audio/demo/line3.wav"
+        "referenceAudioUrl": "/audio/demo/line3.wav",
+        "videoUrl": "/audio/demo/line3.mp4"
       },
       {
         "id": "demo-line-4",
@@ -47,7 +50,8 @@
         "startSec": 0,
         "endSec": 6.36,
         "subtitleText": "太精彩了我完全捨不得轉台",
-        "referenceAudioUrl": "/audio/demo/line4.wav"
+        "referenceAudioUrl": "/audio/demo/line4.wav",
+        "videoUrl": "/audio/demo/line4.mp4"
       }
     ]
   },
@@ -64,7 +68,8 @@
         "startSec": 0,
         "endSec": 6.27,
         "subtitleText": "這杯咖啡的香氣讓我瞬間清醒",
-        "referenceAudioUrl": "/audio/demo/line5.wav"
+        "referenceAudioUrl": "/audio/demo/line5.wav",
+        "videoUrl": "/audio/demo/line5.mp4"
       },
       {
         "id": "demo-line-6",
@@ -73,7 +78,8 @@
         "startSec": 0,
         "endSec": 5.35,
         "subtitleText": "麻煩幫我把音量再調大一點",
-        "referenceAudioUrl": "/audio/demo/line6.wav"
+        "referenceAudioUrl": "/audio/demo/line6.wav",
+        "videoUrl": "/audio/demo/line6.mp4"
       }
     ]
   }

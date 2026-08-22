@@ -6,6 +6,7 @@ import Link from "next/link";
 import SpectrogramCanvas from "@/components/audio/SpectrogramCanvas";
 import RecorderPanel from "@/components/audio/RecorderPanel";
 import ScoreBreakdownPanel from "@/components/result/ScoreBreakdownPanel";
+import DubbedPlayback from "@/components/playback/DubbedPlayback";
 import { getClipSource } from "@/lib/repository/clipRepository";
 import {
   loadAudioBuffer,
@@ -167,6 +168,10 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
       )}
 
       {score && <ScoreBreakdownPanel score={score} />}
+
+      {recordedBuffer && currentLine && (
+        <DubbedPlayback videoUrl={currentLine.videoUrl} recordedBuffer={recordedBuffer} />
+      )}
     </main>
   );
 }
