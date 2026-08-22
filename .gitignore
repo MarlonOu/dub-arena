@@ -10,3 +10,8 @@ node_modules/
 # （ClipSource／Line）搬進資料庫，不進版控（性質類似資料庫內容，不是原始碼）
 /data/contributions.json
 /data/uploads/
+
+# 匯出功能（app/api/export/route.ts）的執行期資料：混音暫存音檔與產出的 mp4，
+# 皆為執行期產生，不進版控
+/data/tmp/
+/data/exports/

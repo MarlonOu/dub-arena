@@ -7,6 +7,7 @@ import SpectrogramCanvas from "@/components/audio/SpectrogramCanvas";
 import RecorderPanel from "@/components/audio/RecorderPanel";
 import ScoreBreakdownPanel from "@/components/result/ScoreBreakdownPanel";
 import DubbedPlayback from "@/components/playback/DubbedPlayback";
+import ExportVideoButton from "@/components/export/ExportVideoButton";
 import { getClipSource } from "@/lib/repository/clipRepository";
 import {
   loadAudioBuffer,
@@ -31,6 +32,7 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
   const [clip, setClip] = useState<ClipSource | null>(null);
   const [referenceBuffer, setReferenceBuffer] = useState<AudioBuffer | null>(null);
   const [recordedBuffer, setRecordedBuffer] = useState<AudioBuffer | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [score, setScore] = useState<ScoreBreakdown | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [notFound, setNotFound] = useState(false);
@@ -61,6 +63,7 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
       setStage("loadingReference");
       setReferenceBuffer(null);
       setRecordedBuffer(null);
+      setRecordedBlob(null);
       setScore(null);
       const buf = await loadAudioBuffer(currentLine!.referenceAudioUrl);
       if (cancelled) return;
@@ -87,6 +90,7 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
     setStage("scoring");
     const recBuf = await blobToAudioBuffer(blob);
     setRecordedBuffer(recBuf);
+    setRecordedBlob(blob);
     const result = scoreAttempt(referenceBuffer, recBuf);
     setScore(result);
     setStage("done");
@@ -175,6 +179,10 @@ export default function PracticeLinePage({ params }: { params: Promise<Params> }
 
       {recordedBuffer && practiceVideoUrl && (
         <DubbedPlayback videoUrl={practiceVideoUrl} recordedBuffer={recordedBuffer} />
+      )}
+
+      {recordedBlob && practiceVideoUrl && (
+        <ExportVideoButton videoUrl={practiceVideoUrl} recordedBlob={recordedBlob} />
       )}
 
       {recordedBuffer && currentLine && !practiceVideoUrl && (
