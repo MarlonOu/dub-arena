@@ -25,7 +25,10 @@
         "referenceAudioUrl": "/audio/demo/line2.wav",
         "videoUrl": "/audio/demo/line2.mp4"
       }
-    ]
+    ],
+    "status": "APPROVED",
+    "contributorName": "系統示範",
+    "createdAt": "2026-08-18T00:00:00.000Z"
   },
   {
     "id": "demo-clip-2",
@@ -53,7 +56,10 @@
         "referenceAudioUrl": "/audio/demo/line4.wav",
         "videoUrl": "/audio/demo/line4.mp4"
       }
-    ]
+    ],
+    "status": "APPROVED",
+    "contributorName": "系統示範",
+    "createdAt": "2026-08-18T00:00:00.000Z"
   },
   {
     "id": "demo-clip-3",
@@ -81,6 +87,9 @@
         "referenceAudioUrl": "/audio/demo/line6.wav",
         "videoUrl": "/audio/demo/line6.mp4"
       }
-    ]
+    ],
+    "status": "APPROVED",
+    "contributorName": "系統示範",
+    "createdAt": "2026-08-18T00:00:00.000Z"
   }
 ]

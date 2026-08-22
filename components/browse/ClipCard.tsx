@@ -17,7 +17,10 @@ export default function ClipCard({ clip }: { clip: ClipSource }) {
       </div>
       <div className="flex flex-col gap-1 p-3">
         <div className="text-sm font-medium group-hover:underline">{clip.title}</div>
-        <div className="text-xs text-zinc-500">{clip.lines.length} 個段落</div>
+        <div className="text-xs text-zinc-500">
+          {clip.lines.length} 個段落
+          {clip.sourceDeclaration !== "DEMO" && ` · 投稿者：${clip.contributorName}`}
+        </div>
       </div>
     </Link>
   );

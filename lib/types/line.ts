@@ -11,6 +11,8 @@ export interface Line {
   videoUrl: string;
 }
 
+export type ClipStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ClipSource {
   id: string;
   title: string;
@@ -18,4 +20,8 @@ export interface ClipSource {
   /** Phase 1 尚無真實影片縮圖，先用色塊代表題目卡片，Phase 2 後期／Phase 4 導入真實影片後改為縮圖網址 */
   coverColor: string;
   lines: Line[];
+  /** 示範題庫固定為 APPROVED；UGC 投稿依審核狀態機流轉，見 配音擂台-03-data-model.md */
+  status: ClipStatus;
+  contributorName: string;
+  createdAt: string;
 }

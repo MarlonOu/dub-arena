@@ -2,3 +2,8 @@ node_modules/
 .next/
 .env
 *.log
+
+# UGC 投稿執行期資料，Phase 5 導入 PostgreSQL 後這個檔案／目錄會被取代，
+# 不進版控（性質類似資料庫內容，不是原始碼）
+/data/contributions.json
+/data/uploads/
