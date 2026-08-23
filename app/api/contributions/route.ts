@@ -4,6 +4,11 @@ import { randomUUID } from "crypto";
 import type { NextRequest } from "next/server";
 import { addContribution, listContributions } from "@/lib/repository/contributionStore";
 import type { ClipContentType, ClipSource, ClipStatus, Line } from "@/lib/types/line";
+import {
+  FileContentMismatchError,
+  isRecognizedMediaExt,
+  matchesDeclaredExtension,
+} from "@/lib/media/detectFileType";
 
 export const runtime = "nodejs";
 
@@ -38,10 +43,18 @@ async function saveUploadedFile(file: File, clipId: string, index: number): Prom
   const originalExt = (file.name.split(".").pop() || "bin").toLowerCase();
   const safeExt = /^[a-z0-9]{1,8}$/.test(originalExt) ? originalExt : "bin";
   const fileName = `${clipId}-${index}.${safeExt}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  // Phase 7.6：檔案內容驗證，見 lib/media/detectFileType.ts 開頭的說明。只檢查
+  // 副檔名跟內容簽章是否一致，在寫入磁碟之前擋下，避免任意二進位內容假冒成
+  // 媒體檔被存進 data/uploads/、之後又被 /api/media/[filename] 原樣 serve 出去。
+  if (isRecognizedMediaExt(safeExt) && !matchesDeclaredExtension(bytes, safeExt)) {
+    throw new FileContentMismatchError(safeExt);
+  }
+
   // 存在 data/uploads/（非 public/），見 app/api/media/[filename]/route.ts 開頭的說明：
   // public/ 的靜態檔案清單在伺服器啟動時就固定了，執行期間新寫入的檔案不會被自動 serve。
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  const bytes = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(path.join(UPLOAD_DIR, fileName), bytes);
   return `/api/media/${fileName}`;
 }
@@ -82,7 +95,18 @@ async function handleVideoSubmission(
   }
 
   const clipId = randomUUID();
-  const videoUrl = await saveUploadedFile(videoFile, clipId, 0);
+  let videoUrl: string;
+  try {
+    videoUrl = await saveUploadedFile(videoFile, clipId, 0);
+  } catch (err) {
+    if (err instanceof FileContentMismatchError) {
+      return Response.json(
+        { error: "影片檔內容與副檔名不符，請確認上傳的是真正的影片檔案" },
+        { status: 400 }
+      );
+    }
+    throw err;
+  }
 
   const lines: Line[] = lineInputs.map((l, i) => ({
     id: `${clipId}-line-${i + 1}`,
@@ -147,18 +171,36 @@ async function handleAudioPackSubmission(
 
   const clipId = randomUUID();
   const lines: Line[] = [];
-  for (let i = 0; i < lineInputs.length; i++) {
-    const audioUrl = await saveUploadedFile(audioFiles[i], clipId, i);
-    lines.push({
-      id: `${clipId}-line-${i + 1}`,
-      clipSourceId: clipId,
-      order: i + 1,
-      startSec: 0,
-      endSec: 0, // AUDIO_PACK 沒有裁切時間軸，整段音檔即為題目，此欄位不使用
-      subtitleText: lineInputs[i].subtitleText,
-      referenceAudioUrl: audioUrl,
-      // 無 videoUrl：AUDIO_PACK 是純音檔語音包，練習頁面據此跳過疊音播放環節
-    });
+  const savedFileNames: string[] = [];
+  // 逐段存檔，任一段失敗（內容跟副檔名不符、或其他寫入錯誤）就整批放棄，
+  // 並清掉這個 clipId 底下已經寫入的檔案，避免留下沒有任何投稿紀錄指向、
+  // 永遠不會被清理的孤兒檔案（Phase 7.6 補上，先前沒有這層清理）。
+  try {
+    for (let i = 0; i < lineInputs.length; i++) {
+      const audioUrl = await saveUploadedFile(audioFiles[i], clipId, i);
+      savedFileNames.push(audioUrl.replace("/api/media/", ""));
+      lines.push({
+        id: `${clipId}-line-${i + 1}`,
+        clipSourceId: clipId,
+        order: i + 1,
+        startSec: 0,
+        endSec: 0, // AUDIO_PACK 沒有裁切時間軸，整段音檔即為題目，此欄位不使用
+        subtitleText: lineInputs[i].subtitleText,
+        referenceAudioUrl: audioUrl,
+        // 無 videoUrl：AUDIO_PACK 是純音檔語音包，練習頁面據此跳過疊音播放環節
+      });
+    }
+  } catch (err) {
+    await Promise.all(
+      savedFileNames.map((name) => fs.unlink(path.join(UPLOAD_DIR, name)).catch(() => {}))
+    );
+    if (err instanceof FileContentMismatchError) {
+      return Response.json(
+        { error: "有音檔內容與副檔名不符，請確認上傳的是真正的音訊檔案" },
+        { status: 400 }
+      );
+    }
+    throw err;
   }
 
   const clip: ClipSource = {
