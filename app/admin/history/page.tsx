@@ -6,11 +6,22 @@ import type { ClipSource } from "@/lib/types/line";
 
 // Phase 7.1：審核紀錄檢視介面，補上 Phase 7 完成時記下的缺口
 // （reviewed_by／reviewed_at 當時只寫入資料庫，沒有對應畫面）。
-// 唯讀，沒有操作按鈕；只列最近 50 筆已審核投稿，沒有分頁機制，見
-// contributionStore.ts 的 listReviewedContributions() 說明。
+// Phase 7.4：補上分頁，取代原本固定只顯示最近 50 筆的做法。
+// 唯讀，沒有操作按鈕。
+
+const PAGE_SIZE = 20;
+
+interface HistoryPageResult {
+  items: ClipSource[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
 
 export default function ReviewHistoryPage() {
-  const [reviewed, setReviewed] = useState<ClipSource[] | null>(null);
+  const [result, setResult] = useState<HistoryPageResult | null>(null);
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -19,16 +30,17 @@ export default function ReviewHistoryPage() {
     async function load() {
       await Promise.resolve();
       if (cancelled) return;
+      setError(null);
       try {
-        const res = await fetch("/api/contributions/history");
+        const res = await fetch(`/api/contributions/history?page=${page}&pageSize=${PAGE_SIZE}`);
         if (cancelled) return;
         if (!res.ok) {
           setError(`載入失敗（${res.status}）`);
           return;
         }
-        const data = (await res.json()) as ClipSource[];
+        const data = (await res.json()) as HistoryPageResult;
         if (cancelled) return;
-        setReviewed(data);
+        setResult(data);
       } catch {
         if (!cancelled) setError("載入失敗，請確認網路連線");
       }
@@ -38,7 +50,7 @@ export default function ReviewHistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 p-6">
@@ -50,20 +62,21 @@ export default function ReviewHistoryPage() {
           </Link>
         </div>
         <p className="mt-1 text-sm text-zinc-500">
-          最近 50 筆已核准／已駁回的投稿，唯讀，沒有分頁。
+          已核准／已駁回的投稿，唯讀，依審核時間新到舊排序
+          {result && result.total > 0 && `，共 ${result.total} 筆`}。
         </p>
       </div>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 
-      {reviewed === null && !error && <div className="text-sm text-zinc-500">載入中……</div>}
+      {result === null && !error && <div className="text-sm text-zinc-500">載入中……</div>}
 
-      {reviewed && reviewed.length === 0 && (
+      {result && result.items.length === 0 && (
         <div className="text-sm text-zinc-500">目前沒有任何審核紀錄。</div>
       )}
 
       <div className="flex flex-col gap-2">
-        {reviewed?.map((clip) => (
+        {result?.items.map((clip) => (
           <div
             key={clip.id}
             className="flex items-center justify-between gap-4 rounded border border-zinc-200 p-3 text-sm"
@@ -91,6 +104,30 @@ export default function ReviewHistoryPage() {
           </div>
         ))}
       </div>
+
+      {result && result.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 disabled:opacity-40"
+          >
+            上一頁
+          </button>
+          <span className="text-xs text-zinc-500">
+            第 {result.page} ／ {result.totalPages} 頁
+          </span>
+          <button
+            type="button"
+            disabled={page >= result.totalPages}
+            onClick={() => setPage((p) => Math.min(result.totalPages, p + 1))}
+            className="rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 disabled:opacity-40"
+          >
+            下一頁
+          </button>
+        </div>
+      )}
     </main>
   );
 }

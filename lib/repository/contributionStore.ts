@@ -98,20 +98,51 @@ export async function listContributions(status?: ClipStatus): Promise<ClipSource
   }
 }
 
-const HISTORY_LIMIT = 50;
+// Phase 7.2 起：/admin/history 分頁上限，避免 pageSize 被亂帶大值查出整張表。
+export const HISTORY_DEFAULT_PAGE_SIZE = 20;
+export const HISTORY_MAX_PAGE_SIZE = 100;
 
-/** Phase 7.1：審核紀錄檢視介面用，列出已審核（非 PENDING）的投稿，依審核時間新到舊，
- * 最多回傳 HISTORY_LIMIT 筆——沒有分頁機制，這是刻意畫的範圍，數量變多後需要補分頁。 */
-export async function listReviewedContributions(): Promise<ClipSource[]> {
+export interface ReviewedContributionsPage {
+  items: ClipSource[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+/** Phase 7.1 新增、Phase 7.4 補上分頁：列出已審核（非 PENDING）的投稿，依審核時間新到舊。
+ * `reviewed_at` 理論上核准／駁回時一定會寫入，但保留 NULLS LAST 是為了保護 Phase 7 之前
+ * 就存在、沒有這個欄位的舊資料；同分秒的情況再用 id 當第二排序鍵，確保分頁結果穩定
+ * （不會因為兩筆 reviewed_at 完全相同就出現順序不一致、漏筆或重複筆的問題）。 */
+export async function listReviewedContributions(
+  page: number = 1,
+  pageSize: number = HISTORY_DEFAULT_PAGE_SIZE
+): Promise<ReviewedContributionsPage> {
+  const safePage = Number.isInteger(page) && page >= 1 ? page : 1;
+  const safePageSize =
+    Number.isInteger(pageSize) && pageSize >= 1 && pageSize <= HISTORY_MAX_PAGE_SIZE
+      ? pageSize
+      : HISTORY_DEFAULT_PAGE_SIZE;
+
   const pool = getPool();
   const client = await pool.connect();
   try {
+    const countResult = await client.query<{ count: string }>(
+      "SELECT COUNT(*) FROM clip_sources WHERE status != 'PENDING'"
+    );
+    const total = Number(countResult.rows[0]?.count ?? "0");
+    const totalPages = Math.max(1, Math.ceil(total / safePageSize));
+
     const { rows } = await client.query<ClipSourceRow>(
       `SELECT id, title, contributor_name, source_declaration, content_type, cover_color, status, created_at, reviewed_by, reviewed_at
-       FROM clip_sources WHERE status != 'PENDING' ORDER BY reviewed_at DESC NULLS LAST LIMIT $1`,
-      [HISTORY_LIMIT]
+       FROM clip_sources WHERE status != 'PENDING'
+       ORDER BY reviewed_at DESC NULLS LAST, id DESC
+       LIMIT $1 OFFSET $2`,
+      [safePageSize, (safePage - 1) * safePageSize]
     );
-    return await attachLines(client, rows);
+    const items = await attachLines(client, rows);
+
+    return { items, total, page: safePage, pageSize: safePageSize, totalPages };
   } finally {
     client.release();
   }
