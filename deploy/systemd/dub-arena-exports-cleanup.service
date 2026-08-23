@@ -1,0 +1,12 @@
+[Unit]
+Description=dub-arena 匯出影片清理（pnpm run exports:cleanup）
+# 這支腳本不連資料庫、不需要任何環境變數，失敗機率遠低於備份腳本，
+# 同樣不額外設定 Restart，失敗直接看 journalctl。
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/dub-arena
+# 同 dub-arena-backup.service 的提醒：部署前先確認 pnpm 實際路徑跟這裡一致。
+ExecStart=/bin/bash -lc 'pnpm run exports:cleanup'
+StandardOutput=append:/var/log/dub-arena-cleanup.log
+StandardError=append:/var/log/dub-arena-cleanup.log

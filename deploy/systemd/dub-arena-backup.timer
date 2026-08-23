@@ -1,0 +1,12 @@
+[Unit]
+Description=每天定時觸發 dub-arena 資料庫備份
+
+[Timer]
+# 每天凌晨 2 點，比 exports-cleanup 的 3 點早，避免同時大量讀寫磁碟。
+OnCalendar=*-*-* 02:00:00
+# 主機若剛好在排定時間重開機／關機，錯過的這次會在下次開機後補跑，
+# 不會整天沒有備份。
+Persistent=true
+
+[Install]
+WantedBy=timers.target

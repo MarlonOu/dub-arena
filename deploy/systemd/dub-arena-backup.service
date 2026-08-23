@@ -1,0 +1,13 @@
+[Unit]
+Description=dub-arena 資料庫備份（pnpm run db:backup）
+# db:backup 內部已自行處理連線失敗／缺少 DATABASE_URL 的情況並以非 0 結束碼結束，
+# 這裡不需要額外的 Restart 設定，失敗直接反映在 systemctl status／journalctl 即可。
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/dub-arena
+# 若伺服器上 `which pnpm` 的路徑跟這裡不同（例如透過 nvm 安裝、非 root 全域安裝），
+# 部署前務必先手動確認、替換成實際路徑，systemd 執行環境的 PATH 不一定跟登入 shell 一致。
+ExecStart=/bin/bash -lc 'pnpm run db:backup'
+StandardOutput=append:/var/log/dub-arena-backup.log
+StandardError=append:/var/log/dub-arena-backup.log

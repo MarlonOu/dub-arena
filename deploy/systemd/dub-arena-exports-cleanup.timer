@@ -1,0 +1,10 @@
+[Unit]
+Description=每天定時觸發 dub-arena 匯出影片清理
+
+[Timer]
+# 每天凌晨 3 點，晚於 db-backup 的 2 點。
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
