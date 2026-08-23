@@ -15,3 +15,7 @@ node_modules/
 # 皆為執行期產生，不進版控
 /data/tmp/
 /data/exports/
+
+# 資料庫備份（scripts/backup-db.mjs 產生的 .sql.gz），執行期產生，不進版控，
+# 正式機需自行負責搬到異地備份，見 配音擂台-infra.md
+/data/backups/
