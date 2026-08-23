@@ -30,9 +30,11 @@ function needsAuth(request: NextRequest): boolean {
   }
 
   // Phase 7.2：審核者帳號管理 API，跟 /admin 頁面同一組驗證規則。
+  // Phase 7.8：/api/admin/whoami（回報自己是誰／什麼角色）比照辦理。
   // 注意這裡刻意跟 /api/admin/login、/api/admin/logout 分開判斷（那兩支不受保護），
   // 不能直接寫成 pathname.startsWith("/api/admin") 否則會連登入本身都被擋住。
   if (pathname.startsWith("/api/admin/reviewers")) return true;
+  if (pathname === "/api/admin/whoami") return true;
 
   return false;
 }
@@ -87,5 +89,6 @@ export const config = {
     "/api/contributions/:path*",
     "/api/admin/reviewers",
     "/api/admin/reviewers/:path*",
+    "/api/admin/whoami",
   ],
 };
