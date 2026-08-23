@@ -16,6 +16,33 @@ export default function Home() {
       >
         選擇題目開始練習
       </Link>
+
+      {/*
+        開發階段用的頁面速覽，正式上線前移除。
+        practice 頁面需要 clipId/lineId 參數，不列在這裡，從 /browse 點題目進去即可。
+      */}
+      <div className="mt-4 rounded border border-dashed border-amber-400 bg-amber-50 p-4">
+        <p className="text-xs font-medium text-amber-800">
+          開發中頁面速覽（正式上線前移除）
+        </p>
+        <ul className="mt-2 flex flex-col gap-1 text-sm text-amber-900 underline">
+          <li>
+            <Link href="/browse">/browse — 題目瀏覽</Link>
+          </li>
+          <li>
+            <Link href="/contribute">/contribute — 投稿</Link>
+          </li>
+          <li>
+            <Link href="/admin/review">/admin/review — 審核後台</Link>
+          </li>
+          <li>
+            <Link href="/admin/history">/admin/history — 審核紀錄</Link>
+          </li>
+          <li>
+            <Link href="/admin/login">/admin/login — 審核者登入</Link>
+          </li>
+        </ul>
+      </div>
     </main>
   );
 }
