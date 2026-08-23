@@ -44,9 +44,9 @@ try {
   await client.connect();
   const passwordHash = hashPassword(password);
   await client.query(
-    `INSERT INTO reviewers (id, username, password_hash, created_at)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
+    `INSERT INTO reviewers (id, username, password_hash, created_at, active)
+     VALUES ($1, $2, $3, $4, true)
+     ON CONFLICT (username) DO UPDATE SET password_hash = EXCLUDED.password_hash, active = true`,
     [randomUUID(), username, passwordHash, new Date().toISOString()]
   );
   console.log(`審核者帳號已建立／更新密碼：${username}`);

@@ -41,6 +41,9 @@ export default function Home() {
           <li>
             <Link href="/admin/login">/admin/login — 審核者登入</Link>
           </li>
+          <li>
+            <Link href="/admin/reviewers">/admin/reviewers — 帳號管理</Link>
+          </li>
         </ul>
       </div>
     </main>

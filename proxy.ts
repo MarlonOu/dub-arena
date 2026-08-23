@@ -29,6 +29,11 @@ function needsAuth(request: NextRequest): boolean {
     return true; // PATCH／DELETE 等其他方法一律需要登入
   }
 
+  // Phase 7.2：審核者帳號管理 API，跟 /admin 頁面同一組驗證規則。
+  // 注意這裡刻意跟 /api/admin/login、/api/admin/logout 分開判斷（那兩支不受保護），
+  // 不能直接寫成 pathname.startsWith("/api/admin") 否則會連登入本身都被擋住。
+  if (pathname.startsWith("/api/admin/reviewers")) return true;
+
   return false;
 }
 
@@ -76,5 +81,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/contributions", "/api/contributions/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/api/contributions",
+    "/api/contributions/:path*",
+    "/api/admin/reviewers",
+    "/api/admin/reviewers/:path*",
+  ],
 };

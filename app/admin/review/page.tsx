@@ -84,6 +84,12 @@ export default function ReviewPage() {
           >
             審核紀錄
           </Link>
+          <Link
+            href="/admin/reviewers"
+            className="w-fit rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600"
+          >
+            帳號管理
+          </Link>
           <button
             type="button"
             onClick={handleLogout}

@@ -29,6 +29,11 @@ export async function POST(request: Request) {
   if (!reviewer || !verifyPassword(password, reviewer.passwordHash)) {
     return Response.json({ error: "帳號或密碼錯誤" }, { status: 401 });
   }
+  if (!reviewer.active) {
+    // 帳密正確但帳號已被停用（Phase 7.2），刻意跟「帳號或密碼錯誤」用不同訊息，
+    // 讓被停用的人知道要找管理員處理，而不是一直懷疑自己打錯密碼。
+    return Response.json({ error: "此帳號已被停用，請聯絡管理員" }, { status: 403 });
+  }
 
   const token = await signSession(reviewer.username, sessionSecret);
 
