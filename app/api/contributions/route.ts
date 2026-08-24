@@ -15,6 +15,8 @@ import {
   MAX_SUBTITLE_TEXT_LENGTH,
   MAX_TITLE_LENGTH,
 } from "@/lib/validation/contributionLimits";
+import { getClientIp } from "@/lib/http/clientIp";
+import { checkSubmissionRateLimit } from "@/lib/rateLimit/submissionRateLimiter";
 
 export const runtime = "nodejs";
 
@@ -248,6 +250,21 @@ async function handleAudioPackSubmission(
 }
 
 export async function POST(request: Request) {
+  // Phase 7.10：IP 層級限流，刻意放在 request.formData() 之前——超過限制時
+  // 完全不去讀取請求主體（可能是幾百 MB 的影片檔），直接拒絕，省下不必要的
+  // 頻寬與處理時間，見 lib/rateLimit/submissionRateLimiter.ts 的設計說明。
+  const clientIp = getClientIp(request);
+  const rateLimitResult = checkSubmissionRateLimit(clientIp);
+  if (!rateLimitResult.allowed) {
+    return Response.json(
+      { error: "投稿太頻繁，請稍後再試" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimitResult.retryAfterSeconds) },
+      }
+    );
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
