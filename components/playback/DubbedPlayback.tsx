@@ -12,6 +12,12 @@ interface Props {
 // 影片畫面靜音播放，改為同步播放玩家錄音，取代原始人聲。
 // 已知限制（見路線圖待驗證清單）：若錄音長度與影片長度差距明顯，
 // 較短的一方結束後，另一方會繼續播完，此為簡化版對齊策略，非最終方案。
+// 注意：Phase 7.11 起，這裡的即時預覽策略跟 Phase 6 伺服器端匯出
+// （lib/media/muxExport.ts）的對齊策略已經不同——匯出檔案會鎖死在影片
+// 長度、錄音較短補靜音／較長截斷，這裡的即時預覽刻意維持原本兩者各播
+// 各的簡化做法，不做對應調整（練習頁面本身沒有「輸出檔案長度」的概念，
+// 影片元素靜音播放本來就會自然播完，這裡的已知限制主要是玩家聽感上的
+// 對齊誤差，不是內容遺失，風險層級跟匯出功能不同，暫不處理）。
 export default function DubbedPlayback({ videoUrl, recordedBuffer }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
