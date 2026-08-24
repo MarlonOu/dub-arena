@@ -6,6 +6,7 @@ import {
 } from "@/lib/repository/reviewerStore";
 import { hashPassword } from "@/lib/auth/password";
 import { getCurrentActor } from "@/lib/auth/authorize";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -24,7 +25,7 @@ export const runtime = "nodejs";
 
 const VALID_ROLES: ReviewerRole[] = ["admin", "reviewer"];
 
-export async function PATCH(
+async function patchHandler(
   request: Request,
   { params }: { params: Promise<{ username: string }> }
 ) {
@@ -85,3 +86,5 @@ export async function PATCH(
 
   return Response.json({ error: "請提供 active、password 或 role 欄位" }, { status: 400 });
 }
+
+export const PATCH = withErrorHandling(patchHandler);

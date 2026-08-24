@@ -1,6 +1,7 @@
 import { findReviewerByUsername } from "@/lib/repository/reviewerStore";
 import { verifyPassword } from "@/lib/auth/password";
 import { signSession, sessionCookieMaxAge, SESSION_COOKIE_NAME } from "@/lib/auth/session";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -8,7 +9,7 @@ export const runtime = "nodejs";
 // ADMIN_USER／ADMIN_PASSWORD 仍保留作為備援）。成功後發一個簽章過的 session cookie，
 // 之後由 proxy.ts 驗證，不需每次請求都查資料庫。
 
-export async function POST(request: Request) {
+async function loginHandler(request: Request) {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
     return Response.json(
@@ -45,3 +46,5 @@ export async function POST(request: Request) {
   );
   return response;
 }
+
+export const POST = withErrorHandling(loginHandler);

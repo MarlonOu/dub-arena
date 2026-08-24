@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { NextRequest } from "next/server";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 // 供玩家下載匯出好的配音影片檔（見 app/api/export/route.ts 產生流程）。
 // 跟 app/api/media/[filename]/route.ts 同樣的理由：不能放 public/，
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 
 const EXPORT_DIR = path.join(process.cwd(), "data", "exports");
 
-export async function GET(
+async function getHandler(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
@@ -70,3 +71,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withErrorHandling(getHandler);

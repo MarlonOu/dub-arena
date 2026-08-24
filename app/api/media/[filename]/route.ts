@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { NextRequest } from "next/server";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,7 @@ function contentTypeFor(filename: string): string {
   }
 }
 
-export async function GET(
+async function getHandler(
   request: NextRequest,
   { params }: { params: Promise<{ filename: string }> }
 ) {
@@ -91,3 +92,5 @@ export async function GET(
     },
   });
 }
+
+export const GET = withErrorHandling(getHandler);

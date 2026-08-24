@@ -4,6 +4,7 @@ import {
   HISTORY_DEFAULT_PAGE_SIZE,
   HISTORY_MAX_PAGE_SIZE,
 } from "@/lib/repository/contributionStore";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -18,7 +19,7 @@ function parsePositiveInt(value: string | null, fallback: number): number {
   return Number.isInteger(parsed) && parsed >= 1 ? parsed : fallback;
 }
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const page = parsePositiveInt(searchParams.get("page"), 1);
   const requestedPageSize = parsePositiveInt(searchParams.get("pageSize"), HISTORY_DEFAULT_PAGE_SIZE);
@@ -27,3 +28,5 @@ export async function GET(request: NextRequest) {
   const result = await listReviewedContributions(page, pageSize);
   return Response.json(result);
 }
+
+export const GET = withErrorHandling(getHandler);

@@ -1,4 +1,5 @@
 import { getCurrentActor } from "@/lib/auth/authorize";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -8,7 +9,9 @@ export const runtime = "nodejs";
 // 受 proxy.ts 的 /api/admin/reviewers 系列規則保護（見該檔案 needsAuth()），
 // 只要求「有沒有登入」，不要求角色，任何已登入的審核者都能問自己是誰。
 
-export async function GET() {
+async function getHandler() {
   const actor = await getCurrentActor();
   return Response.json(actor);
 }
+
+export const GET = withErrorHandling(getHandler);

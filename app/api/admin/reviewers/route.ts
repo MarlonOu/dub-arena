@@ -1,6 +1,7 @@
 import { createReviewer, listReviewers, type ReviewerRole } from "@/lib/repository/reviewerStore";
 import { hashPassword } from "@/lib/auth/password";
 import { requireAdmin } from "@/lib/auth/authorize";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
 
 const VALID_ROLES: ReviewerRole[] = ["admin", "reviewer"];
 
-export async function GET() {
+async function getHandler() {
   const admin = await requireAdmin();
   if (!admin) {
     return Response.json({ error: "只有管理員可以查看審核者帳號清單" }, { status: 403 });
@@ -23,7 +24,7 @@ export async function GET() {
   return Response.json(reviewers);
 }
 
-export async function POST(request: Request) {
+async function postHandler(request: Request) {
   const admin = await requireAdmin();
   if (!admin) {
     return Response.json({ error: "只有管理員可以新增審核者帳號" }, { status: 403 });
@@ -52,3 +53,6 @@ export async function POST(request: Request) {
   const created = reviewers.find((r) => r.username === username);
   return Response.json(created, { status: 201 });
 }
+
+export const GET = withErrorHandling(getHandler);
+export const POST = withErrorHandling(postHandler);

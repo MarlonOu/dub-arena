@@ -1,10 +1,11 @@
 import { updateContributionStatus } from "@/lib/repository/contributionStore";
 import { identifyActor } from "@/lib/auth/identifyActor";
 import type { ClipStatus } from "@/lib/types/line";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
-export async function PATCH(
+async function patchHandler(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -23,3 +24,5 @@ export async function PATCH(
   }
   return Response.json(updated);
 }
+
+export const PATCH = withErrorHandling(patchHandler);

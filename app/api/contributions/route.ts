@@ -17,6 +17,7 @@ import {
 } from "@/lib/validation/contributionLimits";
 import { getClientIp } from "@/lib/http/clientIp";
 import { checkSubmissionRateLimit } from "@/lib/rateLimit/submissionRateLimiter";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -28,7 +29,7 @@ const UPLOAD_DIR = path.join(process.cwd(), "data", "uploads");
 const MAX_VIDEO_BYTES = 200 * 1024 * 1024; // 200MB，單句對話影片綽綽有餘
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024; // 20MB，單句語音綽綽有餘
 
-export async function GET(request: NextRequest) {
+async function getHandler(request: NextRequest) {
   const statusParam = request.nextUrl.searchParams.get("status");
   const status = VALID_STATUS.includes(statusParam as ClipStatus)
     ? (statusParam as ClipStatus)
@@ -249,7 +250,7 @@ async function handleAudioPackSubmission(
   return Response.json(clip, { status: 201 });
 }
 
-export async function POST(request: Request) {
+async function postHandler(request: Request) {
   // Phase 7.10：IP 層級限流，刻意放在 request.formData() 之前——超過限制時
   // 完全不去讀取請求主體（可能是幾百 MB 的影片檔），直接拒絕，省下不必要的
   // 頻寬與處理時間，見 lib/rateLimit/submissionRateLimiter.ts 的設計說明。
@@ -313,3 +314,6 @@ export async function POST(request: Request) {
     ? handleAudioPackSubmission(formData, base)
     : handleVideoSubmission(formData, base);
 }
+
+export const GET = withErrorHandling(getHandler);
+export const POST = withErrorHandling(postHandler);

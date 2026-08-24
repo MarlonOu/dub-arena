@@ -3,6 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { resolveVideoSourcePath } from "@/lib/media/resolveSourcePath";
 import { muxVideoWithAudio } from "@/lib/media/muxExport";
+import { withErrorHandling } from "@/lib/http/withErrorHandling";
 
 export const runtime = "nodejs";
 
@@ -10,7 +11,7 @@ const EXPORT_DIR = path.join(process.cwd(), "data", "exports");
 const TMP_DIR = path.join(process.cwd(), "data", "tmp");
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024; // 玩家單句錄音檔，20MB 綽綽有餘，避免濫用
 
-export async function POST(request: Request) {
+async function postHandler(request: Request) {
   const formData = await request.formData();
   const videoUrl = String(formData.get("videoUrl") ?? "");
   const audio = formData.get("audio");
@@ -60,3 +61,5 @@ export async function POST(request: Request) {
 
   return Response.json({ downloadUrl: `/api/export/${outputFilename}` }, { status: 201 });
 }
+
+export const POST = withErrorHandling(postHandler);
