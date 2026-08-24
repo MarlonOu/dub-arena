@@ -9,6 +9,12 @@ import {
   isRecognizedMediaExt,
   matchesDeclaredExtension,
 } from "@/lib/media/detectFileType";
+import {
+  MAX_CONTRIBUTOR_NAME_LENGTH,
+  MAX_LINES_PER_CLIP,
+  MAX_SUBTITLE_TEXT_LENGTH,
+  MAX_TITLE_LENGTH,
+} from "@/lib/validation/contributionLimits";
 
 export const runtime = "nodejs";
 
@@ -85,9 +91,21 @@ async function handleVideoSubmission(
   if (!Array.isArray(lineInputs) || lineInputs.length === 0) {
     return Response.json({ error: "至少需要新增一個段落" }, { status: 400 });
   }
+  if (lineInputs.length > MAX_LINES_PER_CLIP) {
+    return Response.json(
+      { error: `段落數量過多（上限 ${MAX_LINES_PER_CLIP} 段）` },
+      { status: 400 }
+    );
+  }
   for (const l of lineInputs) {
     if (!l.subtitleText || typeof l.startSec !== "number" || typeof l.endSec !== "number") {
       return Response.json({ error: "段落欄位不完整" }, { status: 400 });
+    }
+    if (l.subtitleText.length > MAX_SUBTITLE_TEXT_LENGTH) {
+      return Response.json(
+        { error: `字幕文字過長（單段上限 ${MAX_SUBTITLE_TEXT_LENGTH} 字）` },
+        { status: 400 }
+      );
     }
     if (l.endSec <= l.startSec) {
       return Response.json({ error: "段落結束時間必須晚於起始時間" }, { status: 400 });
@@ -150,6 +168,12 @@ async function handleAudioPackSubmission(
   if (!Array.isArray(lineInputs) || lineInputs.length === 0) {
     return Response.json({ error: "至少需要新增一段語音" }, { status: 400 });
   }
+  if (lineInputs.length > MAX_LINES_PER_CLIP) {
+    return Response.json(
+      { error: `語音段數過多（上限 ${MAX_LINES_PER_CLIP} 段）` },
+      { status: 400 }
+    );
+  }
 
   const audioFiles: File[] = [];
   for (let i = 0; i < lineInputs.length; i++) {
@@ -159,6 +183,12 @@ async function handleAudioPackSubmission(
     }
     if (!lineInputs[i].subtitleText) {
       return Response.json({ error: `第 ${i + 1} 段缺少文字說明` }, { status: 400 });
+    }
+    if (lineInputs[i].subtitleText.length > MAX_SUBTITLE_TEXT_LENGTH) {
+      return Response.json(
+        { error: `第 ${i + 1} 段文字說明過長（上限 ${MAX_SUBTITLE_TEXT_LENGTH} 字）` },
+        { status: 400 }
+      );
     }
     if (f.size > MAX_AUDIO_BYTES) {
       return Response.json(
@@ -236,6 +266,15 @@ export async function POST(request: Request) {
 
   if (!title || !contributorName) {
     return Response.json({ error: "缺少必填欄位（標題／貢獻者名稱）" }, { status: 400 });
+  }
+  if (title.length > MAX_TITLE_LENGTH) {
+    return Response.json({ error: `標題過長（上限 ${MAX_TITLE_LENGTH} 字）` }, { status: 400 });
+  }
+  if (contributorName.length > MAX_CONTRIBUTOR_NAME_LENGTH) {
+    return Response.json(
+      { error: `投稿者名稱過長（上限 ${MAX_CONTRIBUTOR_NAME_LENGTH} 字）` },
+      { status: 400 }
+    );
   }
   if (sourceDeclaration !== "ORIGINAL" && sourceDeclaration !== "LICENSED") {
     return Response.json({ error: "來源聲明必須是「自行創作」或「已取得授權」" }, { status: 400 });

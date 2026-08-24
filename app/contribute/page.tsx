@@ -3,6 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ClipContentType } from "@/lib/types/line";
+import {
+  MAX_CONTRIBUTOR_NAME_LENGTH,
+  MAX_LINES_PER_CLIP,
+  MAX_SUBTITLE_TEXT_LENGTH,
+  MAX_TITLE_LENGTH,
+} from "@/lib/validation/contributionLimits";
 
 interface VideoLineDraft {
   subtitleText: string;
@@ -45,7 +51,7 @@ export default function ContributePage() {
     setVideoLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
   }
   function addVideoLine() {
-    setVideoLines((prev) => [...prev, emptyVideoLine()]);
+    setVideoLines((prev) => (prev.length >= MAX_LINES_PER_CLIP ? prev : [...prev, emptyVideoLine()]));
   }
   function removeVideoLine(index: number) {
     setVideoLines((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
@@ -55,7 +61,7 @@ export default function ContributePage() {
     setAudioLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
   }
   function addAudioLine() {
-    setAudioLines((prev) => [...prev, emptyAudioLine()]);
+    setAudioLines((prev) => (prev.length >= MAX_LINES_PER_CLIP ? prev : [...prev, emptyAudioLine()]));
   }
   function removeAudioLine(index: number) {
     setAudioLines((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
@@ -194,6 +200,7 @@ export default function ContributePage() {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            maxLength={MAX_TITLE_LENGTH}
             className="rounded border border-zinc-300 px-3 py-2 text-sm"
           />
         </div>
@@ -203,6 +210,7 @@ export default function ContributePage() {
           <input
             value={contributorName}
             onChange={(e) => setContributorName(e.target.value)}
+            maxLength={MAX_CONTRIBUTOR_NAME_LENGTH}
             className="rounded border border-zinc-300 px-3 py-2 text-sm"
           />
         </div>
@@ -252,13 +260,19 @@ export default function ContributePage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="text-sm text-zinc-600">段落（字幕與時間軸，手動輸入）</div>
+              <div className="text-sm text-zinc-600">
+                段落（字幕與時間軸，手動輸入）
+                <span className="ml-1 text-xs text-zinc-400">
+                  （{videoLines.length} / {MAX_LINES_PER_CLIP}）
+                </span>
+              </div>
               {videoLines.map((line, i) => (
                 <div key={i} className="flex flex-col gap-2 rounded border border-zinc-200 p-3">
                   <input
                     placeholder="字幕文字"
                     value={line.subtitleText}
                     onChange={(e) => updateVideoLine(i, { subtitleText: e.target.value })}
+                    maxLength={MAX_SUBTITLE_TEXT_LENGTH}
                     className="rounded border border-zinc-300 px-3 py-2 text-sm"
                   />
                   <div className="flex gap-2">
@@ -293,7 +307,8 @@ export default function ContributePage() {
               <button
                 type="button"
                 onClick={addVideoLine}
-                className="w-fit rounded border border-zinc-800 px-3 py-1.5 text-xs"
+                disabled={videoLines.length >= MAX_LINES_PER_CLIP}
+                className="w-fit rounded border border-zinc-800 px-3 py-1.5 text-xs disabled:opacity-40"
               >
                 新增段落
               </button>
@@ -301,13 +316,19 @@ export default function ContributePage() {
           </>
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="text-sm text-zinc-600">語音（每句一個獨立音檔）</div>
+            <div className="text-sm text-zinc-600">
+              語音（每句一個獨立音檔）
+              <span className="ml-1 text-xs text-zinc-400">
+                （{audioLines.length} / {MAX_LINES_PER_CLIP}）
+              </span>
+            </div>
             {audioLines.map((line, i) => (
               <div key={i} className="flex flex-col gap-2 rounded border border-zinc-200 p-3">
                 <input
                   placeholder="文字說明"
                   value={line.subtitleText}
                   onChange={(e) => updateAudioLine(i, { subtitleText: e.target.value })}
+                  maxLength={MAX_SUBTITLE_TEXT_LENGTH}
                   className="rounded border border-zinc-300 px-3 py-2 text-sm"
                 />
                 <input
@@ -330,7 +351,8 @@ export default function ContributePage() {
             <button
               type="button"
               onClick={addAudioLine}
-              className="w-fit rounded border border-zinc-800 px-3 py-1.5 text-xs"
+              disabled={audioLines.length >= MAX_LINES_PER_CLIP}
+              className="w-fit rounded border border-zinc-800 px-3 py-1.5 text-xs disabled:opacity-40"
             >
               新增語音
             </button>
